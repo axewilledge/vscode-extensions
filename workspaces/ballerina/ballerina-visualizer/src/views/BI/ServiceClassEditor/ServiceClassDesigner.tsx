@@ -16,7 +16,7 @@
  * under the License.
  */
 
-import { Type, ServiceClassModel, ModelFromCodeRequest, FieldType, FunctionModel, NodePosition, STModification, removeStatement, LineRange, EVENT_TYPE, MACHINE_VIEW, DIRECTORY_MAP } from "@wso2/ballerina-core";
+import { Type, ServiceClassModel, ModelFromCodeRequest, FieldType, FunctionModel, NodePosition, STModification, removeStatement, LineRange, EVENT_TYPE, MACHINE_VIEW, DIRECTORY_MAP, FunctionTypes } from "@wso2/ballerina-core";
 import { Codicon, Typography, ProgressRing, Menu, MenuItem, Popover, Item, ThemeColors, LinkButton, View } from "@wso2/ui-toolkit";
 import styled from "@emotion/styled";
 import React, { useEffect, useState } from "react";
@@ -281,7 +281,7 @@ export function ServiceClassDesigner(props: ServiceClassDesignerProps) {
         setIsSaving(false);
     };
 
-    const handleAddFunction = async (type: 'init' | 'resource' | 'remote') => {
+    const handleAddFunction = async (type: FunctionTypes) => {
         const lsResponse = await rpcClient.getServiceDesignerRpcClient().getFunctionModel({
             type: 'object',
             functionName: type

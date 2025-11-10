@@ -26,8 +26,6 @@ import {
     FunctionModelRequest,
     FunctionModelResponse,
     FunctionSourceCodeRequest,
-    HttpResourceModelRequest,
-    HttpResourceModelResponse,
     ListenerModelFromCodeRequest,
     ListenerModelFromCodeResponse,
     ListenerModelRequest,
@@ -275,18 +273,6 @@ export class ServiceDesignerRpcManager implements ServiceDesignerAPI {
             const context = StateMachine.context();
             try {
                 const res: ServiceModelFromCodeResponse = await context.langClient.getServiceModelFromCode(params);
-                resolve(res);
-            } catch (error) {
-                console.log(error);
-            }
-        });
-    }
-
-    async getHttpResourceModel(params: HttpResourceModelRequest): Promise<HttpResourceModelResponse> {
-        return new Promise(async (resolve) => {
-            const context = StateMachine.context();
-            try {
-                const res: HttpResourceModelResponse = await context.langClient.getHttpResourceModel(params);
                 resolve(res);
             } catch (error) {
                 console.log(error);

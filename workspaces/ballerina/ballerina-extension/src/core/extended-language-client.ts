@@ -130,8 +130,6 @@ import {
     TriggerModelsResponse,
     BIGetEnclosedFunctionRequest,
     BIGetEnclosedFunctionResponse,
-    HttpResourceModelRequest,
-    HttpResourceModelResponse,
     ListenerModelRequest,
     ListenerModelResponse,
     ListenerSourceCodeRequest,
@@ -413,7 +411,6 @@ enum EXTENDED_APIS {
     BI_SERVICE_UPDATE_SERVICE = 'serviceDesign/updateService',
     BI_SERVICE_GET_SERVICE_SOURCE = 'serviceDesign/getServiceFromSource',
     BI_SERVICE_UPDATE_SERVICE_CLASS = 'serviceDesign/updateServiceClass',
-    BI_SERVICE_GET_RESOURCE = 'serviceDesign/getFunctionModel',
     BI_SERVICE_GET_RESOURCE_RETURN_TYPES = 'serviceDesign/types',
     BI_SERVICE_ADD_RESOURCE = 'serviceDesign/addResource',
     BI_SERVICE_ADD_FUNCTION = 'serviceDesign/addFunction',
@@ -1233,10 +1230,6 @@ export class ExtendedLangClient extends LanguageClient implements ExtendedLangCl
 
     async addClassField(params: AddFieldRequest): Promise<SourceEditResponse> {
         return this.sendRequest<SourceEditResponse>(EXTENDED_APIS.BI_ADD_CLASS_FIELD, params);
-    }
-
-    async getHttpResourceModel(params: HttpResourceModelRequest): Promise<HttpResourceModelResponse> {
-        return this.sendRequest<HttpResourceModelResponse>(EXTENDED_APIS.BI_SERVICE_GET_RESOURCE, params);
     }
 
     async getResourceReturnTypes(params: ResourceReturnTypesRequest): Promise<VisibleTypesResponse> {

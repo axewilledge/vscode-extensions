@@ -17,7 +17,7 @@
  */
 
 import { UpdatedArtifactsResponse } from "../../interfaces/bi";
-import { ListenerModelRequest, ListenerModelResponse, ServiceModelRequest, ServiceModelResponse, ServiceModelFromCodeRequest, ServiceModelFromCodeResponse, HttpResourceModelRequest, HttpResourceModelResponse, FunctionSourceCodeRequest, ListenerSourceCodeRequest, ListenersRequest, ListenersResponse, ServiceSourceCodeRequest, ListenerModelFromCodeRequest, ListenerModelFromCodeResponse, TriggerModelsRequest, TriggerModelsResponse, FunctionModelRequest, FunctionModelResponse, ResourceReturnTypesRequest, FunctionFromSourceRequest, FunctionFromSourceResponse, ServiceModelInitResponse, ServiceInitSourceRequest, VisibleTypesResponse } from "../../interfaces/extended-lang-client";
+import { ListenerModelRequest, ListenerModelResponse, ServiceModelRequest, ServiceModelResponse, ServiceModelFromCodeRequest, ServiceModelFromCodeResponse, FunctionSourceCodeRequest, ListenerSourceCodeRequest, ListenersRequest, ListenersResponse, ServiceSourceCodeRequest, ListenerModelFromCodeRequest, ListenerModelFromCodeResponse, TriggerModelsRequest, TriggerModelsResponse, FunctionModelRequest, FunctionModelResponse, ResourceReturnTypesRequest, FunctionFromSourceRequest, FunctionFromSourceResponse, ServiceModelInitResponse, ServiceInitSourceRequest, VisibleTypesResponse } from "../../interfaces/extended-lang-client";
 import { PayloadContext } from "../../interfaces/service";
 import {
     ExportOASRequest,
@@ -38,7 +38,6 @@ export interface ServiceDesignerAPI {
     addServiceSourceCode: (params: ServiceSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
     updateServiceSourceCode: (params: ServiceSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
     getServiceModelFromCode: (params: ServiceModelFromCodeRequest) => Promise<ServiceModelFromCodeResponse>;
-    getHttpResourceModel: (params: HttpResourceModelRequest) => Promise<HttpResourceModelResponse>;
     getResourceReturnTypes: (params: ResourceReturnTypesRequest) => Promise<VisibleTypesResponse>;
     addResourceSourceCode: (params: FunctionSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
     addFunctionSourceCode: (params: FunctionSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;

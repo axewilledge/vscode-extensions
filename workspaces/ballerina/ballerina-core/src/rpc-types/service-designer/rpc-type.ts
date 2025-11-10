@@ -18,7 +18,7 @@
  * THIS FILE INCLUDES AUTO GENERATED CODE
  */
 import { UpdatedArtifactsResponse } from "../../interfaces/bi";
-import { ListenerModelRequest, ListenerModelResponse, ServiceModelRequest, ServiceModelResponse, ServiceModelFromCodeRequest, ServiceModelFromCodeResponse, HttpResourceModelRequest, HttpResourceModelResponse, FunctionSourceCodeRequest, ListenerSourceCodeRequest, ListenersRequest, ListenersResponse, ServiceSourceCodeRequest, ListenerModelFromCodeRequest, ListenerModelFromCodeResponse, TriggerModelsRequest, TriggerModelsResponse, FunctionModelRequest, FunctionModelResponse, ResourceReturnTypesRequest, FunctionFromSourceRequest, FunctionFromSourceResponse, ServiceModelInitResponse, ServiceInitSourceRequest, VisibleTypesResponse } from "../../interfaces/extended-lang-client";
+import { ListenerModelRequest, ListenerModelResponse, ServiceModelRequest, ServiceModelResponse, ServiceModelFromCodeRequest, ServiceModelFromCodeResponse, FunctionSourceCodeRequest, ListenerSourceCodeRequest, ListenersRequest, ListenersResponse, ServiceSourceCodeRequest, ListenerModelFromCodeRequest, ListenerModelFromCodeResponse, TriggerModelsRequest, TriggerModelsResponse, FunctionModelRequest, FunctionModelResponse, ResourceReturnTypesRequest, FunctionFromSourceRequest, FunctionFromSourceResponse, ServiceModelInitResponse, ServiceInitSourceRequest, VisibleTypesResponse } from "../../interfaces/extended-lang-client";
 import { PayloadContext } from "../../interfaces/service";
 import {
     ExportOASRequest,
@@ -40,7 +40,6 @@ export const getFunctionFromSource: RequestType<FunctionFromSourceRequest, Funct
 export const addServiceSourceCode: RequestType<ServiceSourceCodeRequest, UpdatedArtifactsResponse> = { method: `${_preFix}/addServiceSourceCode` };
 export const updateServiceSourceCode: RequestType<ServiceSourceCodeRequest, UpdatedArtifactsResponse> = { method: `${_preFix}/updateServiceSourceCode` };
 export const getServiceModelFromCode: RequestType<ServiceModelFromCodeRequest, ServiceModelFromCodeResponse> = { method: `${_preFix}/getServiceModelFromCode` };
-export const getHttpResourceModel: RequestType<HttpResourceModelRequest, HttpResourceModelResponse> = { method: `${_preFix}/getHttpResourceModel` };
 export const getResourceReturnTypes: RequestType<ResourceReturnTypesRequest, VisibleTypesResponse> = { method: `${_preFix}/getResourceReturnTypes` };
 export const addResourceSourceCode: RequestType<FunctionSourceCodeRequest, UpdatedArtifactsResponse> = { method: `${_preFix}/addResourceSourceCode` };
 export const addFunctionSourceCode: RequestType<FunctionSourceCodeRequest, UpdatedArtifactsResponse> = { method: `${_preFix}/addFunctionSourceCode` };

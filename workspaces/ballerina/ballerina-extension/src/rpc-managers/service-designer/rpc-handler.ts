@@ -31,7 +31,6 @@ import {
     generateExamplePayloadJson,
     getFunctionFromSource,
     getFunctionModel,
-    getHttpResourceModel,
     getListenerModel,
     getListenerModelFromCode,
     getListeners,
@@ -40,7 +39,6 @@ import {
     getServiceModel,
     getServiceModelFromCode,
     getTriggerModels,
-    HttpResourceModelRequest,
     ListenerModelFromCodeRequest,
     ListenerModelRequest,
     ListenerSourceCodeRequest,
@@ -74,7 +72,6 @@ export function registerServiceDesignerRpcHandlers(messenger: Messenger) {
     messenger.onRequest(addServiceSourceCode, (args: ServiceSourceCodeRequest) => rpcManger.addServiceSourceCode(args));
     messenger.onRequest(updateServiceSourceCode, (args: ServiceSourceCodeRequest) => rpcManger.updateServiceSourceCode(args));
     messenger.onRequest(getServiceModelFromCode, (args: ServiceModelFromCodeRequest) => rpcManger.getServiceModelFromCode(args));
-    messenger.onRequest(getHttpResourceModel, (args: HttpResourceModelRequest) => rpcManger.getHttpResourceModel(args));
     messenger.onRequest(getResourceReturnTypes, (args: ResourceReturnTypesRequest) => rpcManger.getResourceReturnTypes(args));
     messenger.onRequest(addResourceSourceCode, (args: FunctionSourceCodeRequest) => rpcManger.addResourceSourceCode(args));
     messenger.onRequest(addFunctionSourceCode, (args: FunctionSourceCodeRequest) => rpcManger.addFunctionSourceCode(args));

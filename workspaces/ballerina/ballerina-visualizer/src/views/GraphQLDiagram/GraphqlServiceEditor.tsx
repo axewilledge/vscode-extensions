@@ -28,6 +28,7 @@ import {
     FunctionModelResponse,
     STModification,
     removeStatement,
+    FunctionTypes,
 } from "@wso2/ballerina-core";
 import { useRpcContext } from "@wso2/ballerina-rpc-client";
 import {
@@ -215,7 +216,7 @@ export function GraphqlServiceEditor(props: GraphqlServiceEditorProps) {
         fetchTemplates();
     }, []);
 
-    const getFunctionModel = async (type: string) => {
+    const getFunctionModel = async (type: FunctionTypes) => {
         const response: FunctionModelResponse = await rpcClient.getServiceDesignerRpcClient().getFunctionModel({
             type: "graphql",
             functionName: type,

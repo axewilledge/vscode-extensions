@@ -1355,9 +1355,10 @@ export interface ServiceClassSourceRequest {
     serviceClass: ServiceClassModel;
 }
 
+export type FunctionTypes = "init" | "resource" | "remote" | "method" | "query" | "mutation" | "subscription" | "default";
 export interface FunctionModelRequest {
-    type: string;
-    functionName: string;
+    type: "http" | "object" | "graphql" | "object" | "mcp";
+    functionName: FunctionTypes;
 }
 
 export interface FunctionModelResponse {
@@ -1643,13 +1644,7 @@ export interface TriggerFunctionResponse {
 export interface ListenerModelFromCodeResponse {
     listener: ListenerModel;
 }
-export interface HttpResourceModelRequest {
-    type: "http",
-    functionName: "resource"
-}
-export interface HttpResourceModelResponse {
-    function: FunctionModel;
-}
+
 export interface FunctionSourceCodeRequest {
     filePath: string;
     function: FunctionModel;
@@ -1947,7 +1942,6 @@ export interface BIInterface extends BaseLangClientInterface {
     getServiceModel: (params: ServiceModelRequest) => Promise<ServiceModelResponse>;
     addServiceSourceCode: (params: ServiceSourceCodeRequest) => Promise<ListenerSourceCodeResponse>;
     getServiceModelFromCode: (params: ServiceModelFromCodeRequest) => Promise<ServiceModelFromCodeResponse>;
-    getHttpResourceModel: (params: HttpResourceModelRequest) => Promise<HttpResourceModelResponse>;
     addResourceSourceCode: (params: FunctionSourceCodeRequest) => Promise<ResourceSourceCodeResponse>;
     addFunctionSourceCode: (params: FunctionSourceCodeRequest) => Promise<ResourceSourceCodeResponse>;
     getResourceReturnTypes: (params: ResourceReturnTypesRequest) => Promise<VisibleTypesResponse>;
