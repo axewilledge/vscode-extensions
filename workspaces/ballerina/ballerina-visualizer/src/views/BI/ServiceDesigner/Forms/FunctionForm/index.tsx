@@ -18,25 +18,50 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { ActionButtons, Divider, SidePanelBody, Typography, ProgressIndicator } from '@wso2/ui-toolkit';
+import { ActionButtons, Divider, SidePanelBody, Typography, ProgressIndicator, FormContainer } from '@wso2/ui-toolkit';
 import { FunctionName } from './FunctionName/FunctionName';
 import { FunctionReturn } from './Return/FunctionReturn';
 import styled from '@emotion/styled';
 import { FunctionModel, ParameterModel, PropertyModel, ReturnTypeModel } from '@wso2/ballerina-core';
 import { Parameters } from './Parameters/Parameters';
 import { EditorContentColumn } from '../../styles';
+import FormGeneratorNew from '../../../Forms/FormGeneratorNew';
+import { FormField } from '@wso2/ballerina-side-panel';
+import { convertConfig } from '../../../../../utils/bi';
 
 export interface ResourceFormProps {
+	functionName: string;
 	model: FunctionModel;
+	filePath: string;
 	onSave: (functionModel: FunctionModel) => void;
 	onClose: () => void;
 }
 
 export function FunctionForm(props: ResourceFormProps) {
-	const { model, onSave, onClose } = props;
+	const { functionName, model, filePath, onSave, onClose } = props;
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [saving, setSaving] = useState<boolean>(false);
 	const [functionModel, setFunctionModel] = useState<FunctionModel>(model);
+	const [functionFields, setFunctionFields] = useState<FormField[]>([]);
+
+
+	useEffect(() => {
+		let fields = model ? convertConfig(model.properties) : [];
+		// update description fields as "TEXTAREA"
+		fields.forEach((field) => {
+			if (field.key === "functionNameDescription" || field.key === "typeDescription") {
+				field.type = "TEXTAREA";
+			}
+			if (field.key === "parameters") {
+				if ((field.valueTypeConstraint as any).value.parameterDescription) {
+					(field.valueTypeConstraint as any).value.parameterDescription.type = "TEXTAREA";
+				}
+			}
+		});
+		setFunctionFields(fields);
+	}, [model]);
+
 
 	useEffect(() => {
 		console.log("Function Model", model);
@@ -78,18 +103,19 @@ export function FunctionForm(props: ResourceFormProps) {
 		<>
 			{isLoading && <ProgressIndicator id="resource-loading-bar" />}
 			<SidePanelBody>
-				<EditorContentColumn>
-					<FunctionName name={functionModel.name} onChange={onNameChange} readonly={!functionModel.name.editable} />
-					<Divider />
-					<Parameters parameters={[]} onChange={handleParamChange} canAddParameters={true} />
-					<Typography sx={{ marginBlockEnd: 10 }} variant="h4">Returns</Typography>
-					<FunctionReturn returnType={functionModel.returnType} onChange={handleResponseChange} readonly={!functionModel.returnType.editable} />
-				</EditorContentColumn>
-				<ActionButtons
-					primaryButton={{ text: "Save", onClick: handleSave, tooltip: "Save" }}
-					secondaryButton={{ text: "Cancel", onClick: onClose, tooltip: "Cancel" }}
-					sx={{ justifyContent: "flex-end" }}
-				/>
+				<FormContainer>
+					{filePath && functionFields.length > 0 &&
+						<FormGeneratorNew
+							fileName={filePath}
+							nestedForm={true}
+							fields={functionFields}
+							isSaving={saving}
+							onSubmit={handleSave}
+							submitText={saving ? (functionName ? "Saving..." : "Creating...") : (functionName ? "Save" : "Create")}
+							preserveFieldOrder={true}
+						/>
+					}
+				</FormContainer>
 			</SidePanelBody>
 		</>
 	);

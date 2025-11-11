@@ -46,6 +46,7 @@ import { getCustomEntryNodeIcon } from "../ComponentListView/EventIntegrationPan
 import { McpToolForm } from "./Forms/McpToolForm";
 import { removeForwardSlashes, canDataBind, getReadableListenerName } from "./utils";
 import { DatabindForm } from "./Forms/DatabindForm";
+import { SubFunctionForm } from "./Forms/FunctionForm/SubFunctionForm";
 
 const LoadingContainer = styled.div`
     display: flex;
@@ -188,6 +189,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
     const { rpcClient } = useRpcContext();
     const [serviceModel, setServiceModel] = useState<ServiceModel>(undefined);
     const [functionModel, setFunctionModel] = useState<FunctionModel>(undefined);
+    const [subFunctionModel, setSubFunctionModel] = useState<FunctionModel>(undefined);
     const [isSaving, setIsSaving] = useState<boolean>(false);
 
     const [isNew, setIsNew] = useState<boolean>(false);
@@ -332,20 +334,18 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
         // Set dropdown options
         const options: DropdownOptionProps[] = [];
-        // if (!hasInitMethod) {
-        //     options.push({
-        //         title: "Add Init Function",
-        //         description: "Add a new init function within the service",
-        //         value: ADD_INIT_FUNCTION
-        //     });
-        // }
-
-        // options.push({
-        //     title: "Add Sub Flow",
-        //     description: "Add a new reusable function within the service",
-        //     value: ADD_REUSABLE_FUNCTION
-        // });
-
+        if (!hasInitMethod) {
+            options.push({
+                title: "Add Init Function",
+                description: "Add a new init function within the service",
+                value: ADD_INIT_FUNCTION
+            });
+        }
+        options.push({
+            title: "Add Sub Flow",
+            description: "Add a new reusable function within the service",
+            value: ADD_REUSABLE_FUNCTION
+        });
         if (service.moduleName === "http") {
             options.push({
                 title: "Export OpenAPI Spec",
@@ -463,8 +463,14 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
     const onSelectAddReusableFunction = () => {
         setIsNew(true);
-        // setShowFunctionConfigForm(true);
-        handleNewObjectMethod();
+        rpcClient
+            .getServiceDesignerRpcClient()
+            .getFunctionModel({ type: "object", functionName: "default" })
+            .then((res) => {
+                console.log("New Function Model: ", res.function);
+                setSubFunctionModel(res.function);
+                setIsNew(true);
+            });
     };
 
     const onSelectAddHandler = () => {
@@ -523,6 +529,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
     const handleNewFunctionClose = () => {
         setShowForm(false);
+        setSubFunctionModel(undefined);
         // If a handler was selected, also close the FunctionConfigForm
         if (selectedHandler) {
             setShowFunctionConfigForm(false);
@@ -531,7 +538,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
     };
 
     const handleFunctionEdit = (value: FunctionModel) => {
-        setFunctionModel(value);
+        setSubFunctionModel(value);
         setIsNew(false);
         setShowForm(true);
     };
@@ -1201,15 +1208,18 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                             )}
 
                             {/* This is for adding or editing functions */}
-                            {functionModel && !isHttpService && !isMcpService && !canDataBind(functionModel) && (
+                            {subFunctionModel && (
                                 <PanelContainer
                                     title={"Function Configuration"}
-                                    show={showForm}
+                                    show={!!subFunctionModel}
                                     onClose={handleNewFunctionClose}
                                     width={600}
                                 >
-                                    <FunctionForm
-                                        model={functionModel}
+                                    <SubFunctionForm
+                                        model={subFunctionModel}
+                                        filePath={filePath}
+                                        lineRange={createLineRange(filePath, position)}
+                                        isSaving={isSaving}
                                         onSave={handleFunctionSubmit}
                                         onClose={handleNewFunctionClose}
                                     />
@@ -1241,10 +1251,13 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                                 onBack={handleCloseInitFunction}
                                 width={400}
                             >
-                                <FunctionForm
+                                <SubFunctionForm
                                     model={initFunction}
-                                    onSave={handleInitFunctionSave}
-                                    onClose={handleCloseInitFunction}
+                                    filePath={filePath}
+                                    lineRange={createLineRange(filePath, position)}
+                                    isSaving={isSaving}
+                                    onSave={handleFunctionSubmit}
+                                    onClose={handleNewFunctionClose}
                                 />
                             </PanelContainer>
 
