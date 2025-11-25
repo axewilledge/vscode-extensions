@@ -167,6 +167,7 @@ const Description = styled(Typography)`
 `;
 
 interface ServiceDesignerProps {
+    projectPath: string;
     filePath: string;
     position: NodePosition;
     serviceIdentifier: string;
@@ -192,7 +193,7 @@ enum MODEL_TYPE {
 }
 
 export function ServiceDesigner(props: ServiceDesignerProps) {
-    const { filePath, position, serviceIdentifier } = props;
+    const { projectPath, filePath, position, serviceIdentifier } = props;
     const { rpcClient } = useRpcContext();
     const [serviceModel, setServiceModel] = useState<ServiceModel>(undefined);
 
@@ -327,20 +328,20 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
     }
 
     const getProjectListeners = () => {
-        rpcClient
-            .getBIDiagramRpcClient()
-            .getProjectStructure()
-            .then((res) => {
-                const services = res.directoryMap[DIRECTORY_MAP.SERVICE];
-                if (services.length > 0) {
+        rpcClient.getVisualizerLocation().then((location) => {
+            const projectPath = location.projectPath;
+            rpcClient.getBIDiagramRpcClient().getProjectStructure().then((res) => {
+                const project = res.projects.find(project => project.projectPath === projectPath);
+                const services = project?.directoryMap[DIRECTORY_MAP.SERVICE];
+                if (services && services.length > 0) {
                     const selectedService = services.find((service) => service.name === serviceIdentifier);
-                    if (selectedService.moduleName === "mcp") {
+                    if (selectedService?.moduleName === "mcp") {
                         const updatedResources = selectedService.resources.map(resource => ({
                             ...resource,
                             icon: "tool"
                         }));
                         setResources(updatedResources);
-                    } else {
+                    } else if (selectedService) {
                         setResources(selectedService.resources);
                         let hasInitMethod = selectedService.resources.filter((resource) => resource.type === DIRECTORY_MAP.FUNCTION && resource.name === "init").length > 0;
                         const options: DropdownOptionProps[] = [];
@@ -366,14 +367,9 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
                         setDropdownOptions(options);
                     }
-
-                    // // Remove the init option from setDropdownOptions(options); if init function is here
-                    // if (selectedService.resources.find((func) => func.name === "init")) {
-                    //     const filtered = [...dropdownOptions].filter((option) => option.value !== ADD_INIT_FUNCTION);
-                    //     setDropdownOptions(filtered);
-                    // }
                 }
             });
+        });
     };
 
     const handleOpenDiagram = async (resource: FunctionModel) => {
@@ -518,8 +514,13 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
             endColumn: model.codedata.lineRange.endLine.offset,
         };
         await rpcClient.getBIDiagramRpcClient().deleteByComponentInfo({ filePath, component });
+
+        const context = await rpcClient.getVisualizerLocation();
+        const projectPath = context.projectPath;
         const projectStructure = await rpcClient.getBIDiagramRpcClient().getProjectStructure();
-        const serviceArtifact = projectStructure.directoryMap[DIRECTORY_MAP.SERVICE].find(res => res.name === serviceIdentifier);
+        const project = projectStructure.projects.find(project => project.projectPath === projectPath);
+
+        const serviceArtifact = project.directoryMap[DIRECTORY_MAP.SERVICE].find(res => res.name === serviceIdentifier);
         if (serviceArtifact) {
             await rpcClient.getVisualizerRpcClient().openView({ type: EVENT_TYPE.UPDATE_PROJECT_LOCATION, location: { documentUri: serviceArtifact.path, position: serviceArtifact.position } });
             fetchService(serviceArtifact.position);
@@ -741,7 +742,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
     return (
         <View>
-            <TopNavigationBar />
+            <TopNavigationBar projectPath={projectPath} />
             {!serviceModel && (
                 <LoadingContainer>
                     <LoadingRing message="Loading Service..." />
