@@ -25,28 +25,27 @@ import {
     MACHINE_VIEW,
     ProjectStructureArtifactResponse,
     ComponentInfo,
-    ServiceModel
+    ServiceModel,
+    FunctionTypes
 } from "@wso2/ballerina-core";
 import { useRpcContext } from "@wso2/ballerina-rpc-client";
 import { PanelContainer } from "@wso2/ballerina-side-panel";
 import { NodePosition } from "@wso2/syntax-tree";
-import { Button, Codicon, Icon, LinkButton, TextField, Typography, View } from "@wso2/ui-toolkit";
+import { Button, Codicon, Icon, TextField, Typography, View } from "@wso2/ui-toolkit";
 import { useEffect, useRef, useState } from "react";
 import { LoadingRing } from "../../../components/Loader";
 import { TitleBar } from "../../../components/TitleBar";
 import { TopNavigationBar } from "../../../components/TopNavigationBar";
-import { applyModifications, isPositionChanged } from "../../../utils/utils";
+import { isPositionChanged } from "../../../utils/utils";
 import { AddServiceElementDropdown, DropdownOptionProps } from "./components/AddServiceElementDropdown";
 import { ResourceAccordion } from "./components/ResourceAccordion";
 import { ResourceAccordionV2 } from "./components/ResourceAccordionV2";
 import { FunctionConfigForm } from "./Forms/FunctionConfigForm";
-import { FunctionForm } from "./Forms/FunctionForm";
 import { ResourceForm } from "./Forms/ResourceForm";
-import { getCustomEntryNodeIcon } from "../ComponentListView/EventIntegrationPanel";
 import { McpToolForm } from "./Forms/McpToolForm";
 import { removeForwardSlashes, canDataBind, getReadableListenerName } from "./utils";
 import { DatabindForm } from "./Forms/DatabindForm";
-import { SubFunctionForm } from "./Forms/FunctionForm/SubFunctionForm";
+import { FunctionForm } from "./Forms/FunctionForm";
 
 const LoadingContainer = styled.div`
     display: flex;
@@ -184,18 +183,27 @@ export const ADD_REUSABLE_FUNCTION = "add-reusable-function";
 export const EXPORT_OAS = "export-oas";
 export const ADD_HTTP_RESOURCE = "add-http-resource";
 
+enum MODEL_TYPE {
+    HTTP_RESOURCE = "http-resource",
+    INIT_FUNCTION = "init-function",
+    SUB_FUNCTION = "sub-function",
+    MCP_TOOL = "mcp-tool",
+    HANDLER = "handler",
+}
+
 export function ServiceDesigner(props: ServiceDesignerProps) {
     const { filePath, position, serviceIdentifier } = props;
     const { rpcClient } = useRpcContext();
     const [serviceModel, setServiceModel] = useState<ServiceModel>(undefined);
+
+    const [modelType, setModelType] = useState<MODEL_TYPE>(undefined);
     const [functionModel, setFunctionModel] = useState<FunctionModel>(undefined);
-    const [subFunctionModel, setSubFunctionModel] = useState<FunctionModel>(undefined);
     const [isSaving, setIsSaving] = useState<boolean>(false);
 
     const [isNew, setIsNew] = useState<boolean>(false);
     const [showForm, setShowForm] = useState<boolean>(false);
     const [showFunctionConfigForm, setShowFunctionConfigForm] = useState<boolean>(false);
-    const [projectListeners, setProjectListeners] = useState<ProjectStructureArtifactResponse[]>([]);
+
     const prevPosition = useRef(position);
 
     const [resources, setResources] = useState<ProjectStructureArtifactResponse[]>([]);
@@ -203,39 +211,25 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
     const [listeners, setListeners] = useState<string[]>([]);
     const [readonlyProperties, setReadonlyProperties] = useState<Set<ReadonlyProperty>>(new Set());
+
     const [isHttpService, setIsHttpService] = useState<boolean>(false);
     const [isMcpService, setIsMcpService] = useState<boolean>(false);
-    const [objectMethods, setObjectMethods] = useState<FunctionModel[]>([]);
+
     const [dropdownOptions, setDropdownOptions] = useState<DropdownOptionProps[]>([]);
-    const [initMethod, setInitMethod] = useState<FunctionModel>(undefined);
+
     const [enabledHandlers, setEnabledHandlers] = useState<FunctionModel[]>([]);
     const [unusedHandlers, setUnusedHandlers] = useState<FunctionModel[]>([]);
     const [selectedHandler, setSelectedHandler] = useState<FunctionModel>(undefined);
 
-    const [initFunction, setInitFunction] = useState<FunctionModel>(undefined);
-
-    const handleCloseInitFunction = () => {
-        setInitFunction(undefined);
-    };
-
-    const handleInitFunctionSave = async (value: FunctionModel) => {
-        setIsSaving(true);
-        const lineRange: LineRange = {
-            startLine: { line: position.startLine, offset: position.startColumn },
-            endLine: { line: position.endLine, offset: position.endColumn },
-        };
-        const res = await rpcClient
-            .getServiceDesignerRpcClient()
-            .updateResourceSourceCode({ filePath, codedata: { lineRange }, function: value, artifactType: DIRECTORY_MAP.SERVICE });
-        const serviceArtifact = res.artifacts.find(res => res.name === serviceIdentifier);
-        if (serviceArtifact) {
-            fetchService(serviceArtifact.position);
-            await rpcClient.getVisualizerRpcClient().openView({ type: EVENT_TYPE.UPDATE_PROJECT_LOCATION, location: { documentUri: serviceArtifact.path, position: serviceArtifact.position } });
-            setIsSaving(false);
-            setInitFunction(undefined);
-            return;
+    const handleCloseSideForm = () => {
+        setShowForm(false);
+        setFunctionModel(undefined);
+        setModelType(undefined);
+        // If a handler was selected, also clear it
+        if (selectedHandler) {
+            setSelectedHandler(undefined);
         }
-    }
+    };
 
     useEffect(() => {
         if (!serviceModel || isPositionChanged(prevPosition.current, position)) {
@@ -259,7 +253,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                 .then((res) => {
                     console.log("Service Model: ", res.service);
                     if (addMore) {
-                        handleNewResourceFunction();
+                        handleNewHTTPResource();
                     } else {
                         setShowForm(false);
                     }
@@ -314,7 +308,6 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
             if (func.kind === "DEFAULT") {
                 if (func.name?.value === "init") {
                     hasInitMethod = true;
-                    setInitMethod(func);
                 } else {
                     objectMethods.push(func);
                 }
@@ -330,31 +323,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
         setEnabledHandlers(enabledHandlers);
         setUnusedHandlers(unusedHandlers);
-        setObjectMethods(objectMethods);
 
-        // Set dropdown options
-        const options: DropdownOptionProps[] = [];
-        if (!hasInitMethod) {
-            options.push({
-                title: "Add Init Function",
-                description: "Add a new init function within the service",
-                value: ADD_INIT_FUNCTION
-            });
-        }
-        options.push({
-            title: "Add Sub Flow",
-            description: "Add a new reusable function within the service",
-            value: ADD_REUSABLE_FUNCTION
-        });
-        if (service.moduleName === "http") {
-            options.push({
-                title: "Export OpenAPI Spec",
-                description: "Export the OpenAPI spec for the service",
-                value: EXPORT_OAS
-            });
-        }
-
-        setDropdownOptions(options);
     }
 
     const getProjectListeners = () => {
@@ -362,10 +331,6 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
             .getBIDiagramRpcClient()
             .getProjectStructure()
             .then((res) => {
-                const listeners = res.directoryMap[DIRECTORY_MAP.LISTENER];
-                if (listeners.length > 0) {
-                    setProjectListeners(listeners);
-                }
                 const services = res.directoryMap[DIRECTORY_MAP.SERVICE];
                 if (services.length > 0) {
                     const selectedService = services.find((service) => service.name === serviceIdentifier);
@@ -377,6 +342,29 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                         setResources(updatedResources);
                     } else {
                         setResources(selectedService.resources);
+                        let hasInitMethod = selectedService.resources.filter((resource) => resource.type === DIRECTORY_MAP.FUNCTION && resource.name === "init").length > 0;
+                        const options: DropdownOptionProps[] = [];
+                        if (!hasInitMethod) {
+                            options.push({
+                                title: "Add Init Function",
+                                description: "Add a new init function within the service",
+                                value: ADD_INIT_FUNCTION
+                            });
+                        }
+                        options.push({
+                            title: "Add Sub Flow",
+                            description: "Add a new reusable function within the service",
+                            value: ADD_REUSABLE_FUNCTION
+                        });
+                        if (selectedService.moduleName === "http") {
+                            options.push({
+                                title: "Export OpenAPI Spec",
+                                description: "Export the OpenAPI spec for the service",
+                                value: EXPORT_OAS
+                            });
+                        }
+
+                        setDropdownOptions(options);
                     }
 
                     // // Remove the init option from setDropdownOptions(options); if init function is here
@@ -386,18 +374,6 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                     // }
                 }
             });
-    };
-
-    const handleOpenListener = (value: string) => {
-        rpcClient.getVisualizerRpcClient().openView({
-            type: EVENT_TYPE.OPEN_VIEW,
-            location: {
-                view: MACHINE_VIEW.BIServiceConfigView,
-                position: position,
-                documentUri: filePath,
-                identifier: value,
-            },
-        });
     };
 
     const handleOpenDiagram = async (resource: FunctionModel) => {
@@ -424,55 +400,39 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
         });
     };
 
-    const handleNewResourceFunction = () => {
+    //** <-------------------- Model fetching functions start --------------------------------> **//
+    const handleNewFunction = (type: "http" | "mcp" | "object", functionName: FunctionTypes, logMsg: string) => {
         rpcClient
             .getServiceDesignerRpcClient()
-            .getFunctionModel({ type: "http", functionName: "resource" })
+            .getFunctionModel({ type, functionName })
             .then((res) => {
-                console.log("New Function Model: ", res.function);
+                console.log(logMsg, res.function);
                 setFunctionModel(res.function);
                 setIsNew(true);
                 setShowForm(true);
             });
     };
 
+    const handleNewHTTPResource = () => {
+        handleNewFunction("http", "resource", "New HTTP Resource Model: ");
+        setModelType(MODEL_TYPE.HTTP_RESOURCE);
+    }
     const handleNewMcpTool = () => {
-        rpcClient
-            .getServiceDesignerRpcClient()
-            .getFunctionModel({ type: "mcp", functionName: "remote" })
-            .then((res) => {
-                console.log("New Function Model: ", res.function);
-                // let fields = res.function ? convertConfig(res.function.properties) : [];
-                setFunctionModel(res.function);
-                setIsNew(true);
-                setShowForm(true);
-            });
-    };
-
+        handleNewFunction("mcp", "remote", "New MCP Tool Model: ");
+        setModelType(MODEL_TYPE.MCP_TOOL);
+    }
     const handleNewObjectMethod = () => {
-        rpcClient
-            .getServiceDesignerRpcClient()
-            .getFunctionModel({ type: "object", functionName: "default" })
-            .then((res) => {
-                console.log("New Function Model: ", res.function);
-                setFunctionModel(res.function);
-                setIsNew(true);
-                setShowForm(true);
-            });
-    };
+        handleNewFunction("object", "default", "New Function Model: ");
+        setModelType(MODEL_TYPE.SUB_FUNCTION);
+    }
+    const handleNewInitFunction = () => {
+        handleNewFunction("object", "init", "New Init Function Model: ");
+        setModelType(MODEL_TYPE.INIT_FUNCTION);
+    }
+    //** <-------------------- Model fetching functions end --------------------------------> **//
 
-    const onSelectAddReusableFunction = () => {
-        setIsNew(true);
-        rpcClient
-            .getServiceDesignerRpcClient()
-            .getFunctionModel({ type: "object", functionName: "default" })
-            .then((res) => {
-                console.log("New Function Model: ", res.function);
-                setSubFunctionModel(res.function);
-                setIsNew(true);
-            });
-    };
 
+    //** <-------------------- Handler selection functions start --------------------------------> **//
     const onSelectAddHandler = () => {
         setIsNew(true);
         setShowFunctionConfigForm(true);
@@ -484,6 +444,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
             // For databindable functions, show DatabindForm for configuration
             setSelectedHandler(handler);
             setFunctionModel(handler);
+            setModelType(MODEL_TYPE.HANDLER);
             setShowForm(true);
             // Close the FunctionConfigForm to show the DatabindForm instead
             setShowFunctionConfigForm(false);
@@ -495,31 +456,19 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
         }
     };
 
-    const onSelectAddInitFunction = async () => {
-        setIsNew(false);
-        const lsResponse = await rpcClient.getServiceDesignerRpcClient().getFunctionModel({
-            type: 'object',
-            functionName: 'init'
-        });
-        if (lsResponse.function) {
-            setInitFunction(lsResponse.function);
-            console.log(`Adding init function`, lsResponse.function);
-        }
-    };
-
-    const handleAddDropdownOption = (option: string) => {
+    const handleMoreOptions = (option: string) => {
         switch (option) {
             case ADD_REUSABLE_FUNCTION:
-                onSelectAddReusableFunction();
+                handleNewObjectMethod();
                 break;
             case ADD_INIT_FUNCTION:
-                onSelectAddInitFunction();
+                handleNewInitFunction();
                 break;
             case ADD_HANDLER:
                 onSelectAddHandler();
                 break;
             case ADD_HTTP_RESOURCE:
-                handleNewResourceFunction();
+                handleNewHTTPResource();
                 break;
             case EXPORT_OAS:
                 handleExportOAS();
@@ -529,7 +478,6 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
     const handleNewFunctionClose = () => {
         setShowForm(false);
-        setSubFunctionModel(undefined);
         // If a handler was selected, also close the FunctionConfigForm
         if (selectedHandler) {
             setShowFunctionConfigForm(false);
@@ -538,7 +486,23 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
     };
 
     const handleFunctionEdit = (value: FunctionModel) => {
-        setSubFunctionModel(value);
+        // Determine the model type based on the function kind and service type
+        if (value.kind === "INIT") {
+            setFunctionModel(value);
+            setModelType(MODEL_TYPE.INIT_FUNCTION);
+        } else if (isHttpService && value.kind === "RESOURCE") {
+            setFunctionModel(value);
+            setModelType(MODEL_TYPE.HTTP_RESOURCE);
+        } else if (isMcpService && (value.kind === "REMOTE" || value.kind === "OBJECT_METHOD")) {
+            setFunctionModel(value);
+            setModelType(MODEL_TYPE.MCP_TOOL);
+        } else if (!isHttpService && !isMcpService && (value.kind === "REMOTE" || value.kind === "RESOURCE") && canDataBind(value)) {
+            setFunctionModel(value);
+            setModelType(MODEL_TYPE.HANDLER);
+        } else {
+            setFunctionModel(value);
+            setModelType(MODEL_TYPE.SUB_FUNCTION);
+        }
         setIsNew(false);
         setShowForm(true);
     };
@@ -559,48 +523,6 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
         if (serviceArtifact) {
             await rpcClient.getVisualizerRpcClient().openView({ type: EVENT_TYPE.UPDATE_PROJECT_LOCATION, location: { documentUri: serviceArtifact.path, position: serviceArtifact.position } });
             fetchService(serviceArtifact.position);
-        }
-    };
-
-    const handleResourceSubmit = async (value: FunctionModel, openDiagram: boolean = false) => {
-        setIsSaving(true);
-        const lineRange: LineRange = {
-            startLine: { line: position.startLine, offset: position.startColumn },
-            endLine: { line: position.endLine, offset: position.endColumn },
-        };
-        let res = undefined;
-        if (isNew) {
-            res = await rpcClient
-                .getServiceDesignerRpcClient()
-                .addResourceSourceCode({ filePath, codedata: { lineRange }, function: value, artifactType: DIRECTORY_MAP.SERVICE });
-            const serviceArtifact = res.artifacts.find(res => res.isNew && res.name === serviceIdentifier);
-            if (serviceArtifact) {
-                if (openDiagram) {
-                    const accessor = value.accessor.value;
-                    const path = value.name.value;
-                    const resourceIdentifier = `${accessor}#${path}`.toLowerCase();
-                    const resource = serviceArtifact.resources.find(res => res.id === resourceIdentifier);
-                    if (resource) {
-                        await rpcClient.getVisualizerRpcClient().openView({ type: EVENT_TYPE.OPEN_VIEW, location: { documentUri: resource.path, position: resource.position } });
-                    }
-                } else {
-                    await rpcClient.getVisualizerRpcClient().openView({ type: EVENT_TYPE.UPDATE_PROJECT_LOCATION, location: { documentUri: serviceArtifact.path, position: serviceArtifact.position } });
-                    fetchService(serviceArtifact.position, true);
-                }
-                setIsSaving(false);
-                return;
-            }
-        } else {
-            res = await rpcClient
-                .getServiceDesignerRpcClient()
-                .updateResourceSourceCode({ filePath, codedata: { lineRange }, function: value, artifactType: DIRECTORY_MAP.SERVICE });
-            const serviceArtifact = res.artifacts.find(res => res.name === serviceIdentifier);
-            if (serviceArtifact) {
-                fetchService(serviceArtifact.position);
-                await rpcClient.getVisualizerRpcClient().openView({ type: EVENT_TYPE.UPDATE_PROJECT_LOCATION, location: { documentUri: serviceArtifact.path, position: serviceArtifact.position } });
-                setIsSaving(false);
-                return;
-            }
         }
     };
 
@@ -646,7 +568,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
         } else {
             res = await rpcClient
                 .getServiceDesignerRpcClient()
-                .updateResourceSourceCode({ filePath, codedata: { lineRange }, function: value, artifactType: DIRECTORY_MAP.SERVICE });
+                .updateFunctionSourceCode({ filePath, codedata: { lineRange }, function: value, artifactType: DIRECTORY_MAP.SERVICE });
             const serviceArtifact = res.artifacts.find(res => res.name === serviceIdentifier);
             if (serviceArtifact) {
                 fetchService(serviceArtifact.position);
@@ -654,6 +576,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
             }
         }
         setIsNew(false);
+        setFunctionModel(undefined);
         handleNewFunctionClose();
         handleFunctionConfigClose();
         setIsSaving(false);
@@ -661,14 +584,6 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
     const handleFunctionConfigClose = () => {
         setShowFunctionConfigForm(false);
-    };
-
-    const handleInitFunctionClose = () => {
-        setIsNew(false);
-    };
-
-    const handleAddHandleClose = () => {
-        setIsNew(false);
     };
 
     const handleServiceTryIt = () => {
@@ -680,46 +595,6 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
 
     const handleExportOAS = () => {
         rpcClient.getServiceDesignerRpcClient().exportOASFile({});
-    };
-
-    const handleAddListener = () => {
-        // TODO: Implement add listener functionality
-        console.log("Add listener clicked");
-    };
-
-    const handleFieldEdit = () => {
-    };
-
-    const handleFieldDelete = () => {
-    };
-
-    const handleAddServiceField = () => {
-        // TODO: Implement add service field functionality
-        console.log("Add service field clicked");
-    };
-
-    const findIcon = (label: string) => {
-        label = label.toLowerCase();
-        switch (true) {
-            case label.includes("listener"):
-                return "bell";
-            case label.includes("path") || label.includes("base"):
-                return "link";
-            case label.includes("port"):
-                return "ports";
-            case label.includes("host"):
-                return "server";
-            case label.includes("name") || label.includes("queue"):
-                return "tag";
-            case label.includes("timeout"):
-                return "clock";
-            case label.includes("ssl") || label.includes("secure"):
-                return "lock";
-            case label.includes("config"):
-                return "gear";
-            default:
-                return "info";
-        }
     };
 
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -769,6 +644,101 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
         };
     }
 
+    const getPanelTitle = () => {
+        switch (modelType) {
+            case MODEL_TYPE.HTTP_RESOURCE:
+                return isNew ? "Select HTTP Method to Add" : "Resource Configuration";
+            case MODEL_TYPE.INIT_FUNCTION:
+                return isNew ? "Add Initialization Function" : "Initialization Configuration";
+            case MODEL_TYPE.MCP_TOOL:
+                return isNew ? "Add Tool" : "Tool Configuration";
+            case MODEL_TYPE.HANDLER:
+                return isNew ? "Add Handler" : "Handler Configuration";
+            case MODEL_TYPE.SUB_FUNCTION:
+                return isNew ? "Add Function" : "Function Configuration";
+            default:
+                return "Configuration";
+        }
+    }
+
+    const getPanelContent = () => {
+        if (!functionModel) {
+            return null;
+        }
+        switch (modelType) {
+            case MODEL_TYPE.INIT_FUNCTION:
+                return (
+                    <FunctionForm
+                        model={functionModel}
+                        filePath={filePath}
+                        lineRange={createLineRange(filePath, position)}
+                        isSaving={isSaving}
+                        onSave={handleFunctionSubmit}
+                        onClose={handleCloseSideForm}
+                    />
+                )
+            case MODEL_TYPE.SUB_FUNCTION:
+                return (
+                    <FunctionForm
+                        model={functionModel}
+                        filePath={filePath}
+                        lineRange={createLineRange(filePath, position)}
+                        isSaving={isSaving}
+                        onSave={handleFunctionSubmit}
+                        onClose={handleCloseSideForm}
+                    />
+                )
+            case MODEL_TYPE.HTTP_RESOURCE:
+                return (
+                    <ResourceForm
+                        isNew={isNew}
+                        model={functionModel}
+                        isSaving={isSaving}
+                        filePath={filePath}
+                        onSave={handleFunctionSubmit}
+                        onClose={handleCloseSideForm}
+                        payloadContext={{
+                            protocol: "HTTP",
+                            serviceName: serviceModel.name || '',
+                            serviceBasePath: serviceModel.properties?.basePath?.value || '',
+                        }}
+                    />
+                )
+            case MODEL_TYPE.MCP_TOOL:
+                return (
+
+                    <McpToolForm
+                        model={functionModel}
+                        filePath={filePath}
+                        lineRange={createLineRange(filePath, position)}
+                        isSaving={isSaving}
+                        onSave={handleFunctionSubmit}
+                        onClose={handleCloseSideForm}
+                    />
+                )
+            case MODEL_TYPE.HANDLER:
+                return (
+                    !isHttpService && !isMcpService && canDataBind(functionModel) &&
+                    <DatabindForm
+                        model={functionModel}
+                        isSaving={isSaving}
+                        onSave={handleFunctionSubmit}
+                        onClose={handleCloseSideForm}
+                        isNew={isNew}
+                        payloadContext={{
+                            protocol: "MESSAGE_BROKER",
+                            serviceName: serviceModel.name || '',
+                            messageDocumentation: functionModel?.metadata?.description || ''
+                        }}
+                        serviceProperties={serviceModel.properties}
+                        serviceModuleName={serviceModel.moduleName}
+                    />
+                )
+            default:
+                return null;
+        }
+    }
+
     return (
         <View>
             <TopNavigationBar />
@@ -809,7 +779,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                                             buttonTitle="More"
                                             toolTip="More options"
                                             defaultOption="reusable-function"
-                                            onOptionChange={handleAddDropdownOption}
+                                            onOptionChange={handleMoreOptions}
                                             options={dropdownOptions}
                                         />
                                     )}
@@ -850,109 +820,62 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                                             </>
                                         )}
                                     </MetadataRow>
-
-                                    {/* {resources?.
-                                        filter((func) => func.name === "init")
-                                        .map((functionModel, index) => (
-                                            <MetadataRow>
-                                                <MetadataLabel> Initialization Function:</MetadataLabel>
-                                                <Typography key={`${index}-value`} variant="body3">
-                                                    <LinkButton
-                                                        sx={{ fontSize: 12, padding: 8, gap: 4, justifyContent: "center" }}
-                                                        onClick={() => openInit(functionModel)}
-                                                    >
-                                                        {functionModel.name}
-                                                    </LinkButton>
-                                                </Typography>
-                                            </MetadataRow>
-                                        ))} */}
                                 </ServiceMetadataContainer>
                             )}
-
-
-                            {resources.filter((resource) => resource.type === DIRECTORY_MAP.FUNCTION && resource.name === "init").length > 0 && (
-                                <>
-                                    <SectionHeader
-                                        title="Initialization Function"
-                                        subtitle={`Define the initialization logic for the service`}
-                                    >
-                                    </SectionHeader>
-                                    <FunctionsContainer>
-                                        {resources
-                                            .filter((resource) => resource.type === DIRECTORY_MAP.FUNCTION && resource.name === "init")
-                                            .map((resource, index) => (
-                                                <ResourceAccordionV2
-                                                    methodName="INIT"
-                                                    key={`${index}-${resource.name}`}
-                                                    resource={resource}
-                                                    readOnly={serviceModel.properties.hasOwnProperty('serviceTypeName')}
-                                                    onEditResource={handleFunctionEdit}
-                                                    onDeleteResource={handleFunctionDelete}
-                                                    onResourceImplement={() => { openInit(resource) }}
-                                                />
-                                            ))}
-                                    </FunctionsContainer>
-
-                                </>
-                            )}
-
 
                             {/* Listing Resources in HTTP */}
                             {isHttpService && (
                                 <>
-
-                                    <>
-                                        <SectionHeader
-                                            title="Resources"
-                                            subtitle={`${resourcesCount === 0 ? `` : 'Define how the service responds to HTTP requests'}`}
-                                        >
-                                            <ActionGroup>
-                                                {resources.length > 10 && (
-                                                    <TextField placeholder="Search..." sx={{ width: 200 }} onChange={handleSearch} value={searchValue} />
-                                                )}
-                                                {!haveServiceTypeName && resourcesCount > 0 && (
-                                                    <Button appearance="primary" tooltip="Add Resource" onClick={handleNewResourceFunction}>
-                                                        <Codicon name="add" sx={{ marginRight: 8 }} /> <ButtonText>Resource</ButtonText>
-                                                    </Button>
-                                                )}
-                                            </ActionGroup>
-                                        </SectionHeader>
-                                        {resourcesCount > 0 && (
-                                            <FunctionsContainer>
-                                                {resources
-                                                    .filter((resource) => {
-                                                        const search = searchValue.toLowerCase();
-                                                        const nameMatch = resource.name && resource.name.toLowerCase().includes(search);
-                                                        const iconMatch = resource.icon && resource.icon.toLowerCase().includes(search);
-                                                        return nameMatch || iconMatch;
-                                                    })
-                                                    .filter((resource) => resource.type === DIRECTORY_MAP.RESOURCE)
-                                                    .map((resource, index) => (
-                                                        <ResourceAccordionV2
-                                                            key={`${index}-${resource.name}`}
-                                                            resource={resource}
-                                                            readOnly={serviceModel.properties.hasOwnProperty('serviceTypeName')}
-                                                            onEditResource={handleFunctionEdit}
-                                                            onDeleteResource={handleFunctionDelete}
-                                                            onResourceImplement={handleOpenDiagram}
-                                                        />
-                                                    ))}
-                                            </FunctionsContainer>
-                                        )}
-                                        {resourcesCount === 0 && (
-                                            <EmptyReadmeContainer>
-                                                <Description variant="body2">
-                                                    No resources found. Add a new resource.
-                                                </Description>
-                                                <Button
-                                                    appearance="primary"
-                                                    onClick={handleNewResourceFunction}>
-                                                    <Codicon name="add" sx={{ marginRight: 5 }} />
-                                                    Add Resource
+                                    <SectionHeader
+                                        title="Resources"
+                                        subtitle={`${resourcesCount === 0 ? `` : 'Define how the service responds to HTTP requests'}`}
+                                    >
+                                        <ActionGroup>
+                                            {resources.length > 10 && (
+                                                <TextField placeholder="Search..." sx={{ width: 200 }} onChange={handleSearch} value={searchValue} />
+                                            )}
+                                            {!haveServiceTypeName && resourcesCount > 0 && (
+                                                <Button appearance="primary" tooltip="Add Resource" onClick={handleNewHTTPResource}>
+                                                    <Codicon name="add" sx={{ marginRight: 8 }} /> <ButtonText>Resource</ButtonText>
                                                 </Button>
-                                            </EmptyReadmeContainer>
-                                        )}
-                                    </>
+                                            )}
+                                        </ActionGroup>
+                                    </SectionHeader>
+                                    {resourcesCount > 0 && (
+                                        <FunctionsContainer>
+                                            {resources
+                                                .filter((resource) => {
+                                                    const search = searchValue.toLowerCase();
+                                                    const nameMatch = resource.name && resource.name.toLowerCase().includes(search);
+                                                    const iconMatch = resource.icon && resource.icon.toLowerCase().includes(search);
+                                                    return nameMatch || iconMatch;
+                                                })
+                                                .filter((resource) => resource.type === DIRECTORY_MAP.RESOURCE)
+                                                .map((resource, index) => (
+                                                    <ResourceAccordionV2
+                                                        key={`${index}-${resource.name}`}
+                                                        resource={resource}
+                                                        readOnly={serviceModel.properties.hasOwnProperty('serviceTypeName')}
+                                                        onEditResource={handleFunctionEdit}
+                                                        onDeleteResource={handleFunctionDelete}
+                                                        onResourceImplement={handleOpenDiagram}
+                                                    />
+                                                ))}
+                                        </FunctionsContainer>
+                                    )}
+                                    {resourcesCount === 0 && (
+                                        <EmptyReadmeContainer>
+                                            <Description variant="body2">
+                                                No resources found. Add a new resource.
+                                            </Description>
+                                            <Button
+                                                appearance="primary"
+                                                onClick={handleNewHTTPResource}>
+                                                <Codicon name="add" sx={{ marginRight: 5 }} />
+                                                Add Resource
+                                            </Button>
+                                        </EmptyReadmeContainer>
+                                    )}
                                 </>
                             )}
 
@@ -1055,62 +978,40 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                                 </>
                             )}
 
-                            {/* Listing service type bound functions */}
-                            {/* {(initMethod && (
+                            {/* Listing Initialization Function */}
+                            {resources.filter((resource) => resource.type === DIRECTORY_MAP.FUNCTION && resource.name === "init").length > 0 && (
                                 <>
                                     <SectionHeader
                                         title="Initialization Function"
-                                        subtitle="Define the initialization logic for the service"
-                                    />
+                                        subtitle={`Define the initialization logic for the service`}
+                                    >
+                                    </SectionHeader>
                                     <FunctionsContainer>
-                                        <ResourceAccordion
-                                            key={`init-${initMethod.name.value}`}
-                                            functionModel={initMethod}
-                                            goToSource={() => { }}
-                                            onEditResource={handleFunctionEdit}
-                                            onDeleteResource={handleFunctionDelete}
-                                            onResourceImplement={handleOpenDiagram}
-                                        />
+                                        {resources
+                                            .filter((resource) => resource.type === DIRECTORY_MAP.FUNCTION && resource.name === "init")
+                                            .map((resource, index) => (
+                                                <ResourceAccordionV2
+                                                    methodName="INIT"
+                                                    key={`${index}-${resource.name}`}
+                                                    resource={resource}
+                                                    readOnly={serviceModel.properties.hasOwnProperty('serviceTypeName')}
+                                                    onEditResource={handleFunctionEdit}
+                                                    onDeleteResource={handleFunctionDelete}
+                                                    onResourceImplement={() => { openInit(resource) }}
+                                                />
+                                            ))}
                                     </FunctionsContainer>
+
                                 </>
-                            ))} */}
+                            )}
 
-                            {/* Listing service type bound functions */}
-                            {/* {(objectMethods.length > 0 && (
-                                <>
-                                    <SectionHeader
-                                        title="Functions"
-                                        subtitle="Reusable functions within the service"
-                                    />
-                                    <FunctionsContainer>
-                                        {objectMethods.map((functionModel, index) => (
-                                            <ResourceAccordion
-                                                key={`${index}-${functionModel.name.value}`}
-                                                functionModel={functionModel}
-                                                goToSource={() => { }}
-                                                onEditResource={handleFunctionEdit}
-                                                onDeleteResource={handleFunctionDelete}
-                                                onResourceImplement={handleOpenDiagram}
-                                            />
-                                        ))}
-                                    </FunctionsContainer>
-                                </>
-                            ))} */}
-
-
+                            {/* Listing Sub Functions */}
                             {resources.filter((resource) => resource.type === DIRECTORY_MAP.FUNCTION && resource.name !== "init").length > 0 && (
                                 <>
                                     <SectionHeader
                                         title="Functions"
                                         subtitle="Reusable functions within the service"
                                     >
-                                        <ActionGroup>
-                                            {/* {!haveServiceTypeName && resourcesCount > 0 && (
-                                                <Button appearance="primary" tooltip="Add Sub Flow" onClick={handleNewResourceFunction}>
-                                                    <Codicon name="add" sx={{ marginRight: 8 }} /> <ButtonText>Sub Flow</ButtonText>
-                                                </Button>
-                                            )} */}
-                                        </ActionGroup>
                                     </SectionHeader>
                                     <FunctionsContainer>
                                         {resources
@@ -1136,95 +1037,15 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                                 </>
                             )}
 
-                            {/* This is for adding a http resource */}
-                            {functionModel && isHttpService && functionModel.kind === "RESOURCE" && isNew && (
-                                <PanelContainer
-                                    title={"Select HTTP Method to Add"}
-                                    show={showForm}
-                                    onClose={handleNewFunctionClose}
-                                    width={400}
-                                >
-                                    <ResourceForm
-                                        model={functionModel}
-                                        isSaving={isSaving}
-                                        onSave={handleResourceSubmit}
-                                        onClose={handleNewFunctionClose}
-                                        isNew={isNew}
-                                        payloadContext={{
-                                            protocol: "HTTP",
-                                            serviceName: serviceModel.name || '',
-                                            serviceBasePath: serviceModel.properties?.basePath?.value || '',
-                                        }}
-                                    />
-                                </PanelContainer>
-                            )}
-
-                            {/* This is for editing a http resource */}
-                            {functionModel && isHttpService && functionModel.kind === "RESOURCE" && !isNew && (
-                                <PanelContainer
-                                    title={"Resource Configuration"}
-                                    show={showForm}
-                                    onClose={handleNewFunctionClose}
-                                    width={400}
-                                >
-                                    <ResourceForm
-                                        model={functionModel}
-                                        isSaving={isSaving}
-                                        filePath={filePath}
-                                        onSave={handleResourceSubmit}
-                                        onClose={handleNewFunctionClose}
-                                        payloadContext={{
-                                            protocol: "HTTP",
-                                            serviceName: serviceModel.name || '',
-                                            serviceBasePath: serviceModel.properties?.basePath?.value || '',
-                                        }}
-                                    />
-                                </PanelContainer>
-                            )}
-
-                            {/* This is for adding or editing functions with data binding */}
-                            {functionModel && !isHttpService && !isMcpService && canDataBind(functionModel) && (
-                                <PanelContainer
-                                    title={"Message Handler Configuration"}
-                                    show={showForm}
-                                    onClose={handleNewFunctionClose}
-                                    width={400}
-                                >
-                                    <DatabindForm
-                                        model={functionModel}
-                                        isSaving={isSaving}
-                                        onSave={handleFunctionSubmit}
-                                        onClose={handleNewFunctionClose}
-                                        isNew={isNew}
-                                        payloadContext={{
-                                            protocol: "MESSAGE_BROKER",
-                                            serviceName: serviceModel.name || '',
-                                            messageDocumentation: functionModel?.metadata?.description || ''
-                                        }}
-                                        serviceProperties={serviceModel.properties}
-                                        serviceModuleName={serviceModel.moduleName}
-                                    />
-                                </PanelContainer>
-                            )}
-
-                            {/* This is for adding or editing functions */}
-                            {subFunctionModel && (
-                                <PanelContainer
-                                    title={"Function Configuration"}
-                                    show={!!subFunctionModel}
-                                    onClose={handleNewFunctionClose}
-                                    width={600}
-                                >
-                                    <SubFunctionForm
-                                        model={subFunctionModel}
-                                        filePath={filePath}
-                                        lineRange={createLineRange(filePath, position)}
-                                        isSaving={isSaving}
-                                        onSave={handleFunctionSubmit}
-                                        onClose={handleNewFunctionClose}
-                                    />
-                                </PanelContainer>
-                            )}
+                            {/* <-------------------- Side panel forms start ---------------- */}
+                            <PanelContainer
+                                title={getPanelTitle()}
+                                show={showForm}
+                                onClose={handleCloseSideForm}
+                                width={400}
+                            >
+                                {getPanelContent()}
+                            </PanelContainer>
 
                             {/* This is for adding a new handler to the service */}
                             {serviceModel && !isHttpService && (
@@ -1242,42 +1063,7 @@ export function ServiceDesigner(props: ServiceDesignerProps) {
                                     />
                                 </PanelContainer>
                             )}
-
-                            {/* This is for adding a init function to the service */}
-                            <PanelContainer
-                                title={"Add Initialization Function"}
-                                show={!!initFunction}
-                                onClose={handleCloseInitFunction}
-                                onBack={handleCloseInitFunction}
-                                width={400}
-                            >
-                                <SubFunctionForm
-                                    model={initFunction}
-                                    filePath={filePath}
-                                    lineRange={createLineRange(filePath, position)}
-                                    isSaving={isSaving}
-                                    onSave={handleFunctionSubmit}
-                                    onClose={handleNewFunctionClose}
-                                />
-                            </PanelContainer>
-
-                            {functionModel && isMcpService && (
-                                <PanelContainer
-                                    title={"Tool Configuration"}
-                                    show={showForm}
-                                    onClose={handleNewFunctionClose}
-                                    width={400}
-                                >
-                                    <McpToolForm
-                                        model={functionModel}
-                                        filePath={filePath}
-                                        lineRange={createLineRange(filePath, position)}
-                                        isSaving={isSaving}
-                                        onSave={handleFunctionSubmit}
-                                        onClose={handleNewFunctionClose}
-                                    />
-                                </PanelContainer>
-                            )}
+                            {/* <-------------------- Side panel forms end ---------------- */}
                         </ServiceContainer>
                     </>
                 )

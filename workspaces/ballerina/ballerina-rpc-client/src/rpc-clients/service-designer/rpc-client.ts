@@ -48,7 +48,6 @@ import {
     VisibleTypesResponse,
     addFunctionSourceCode,
     addListenerSourceCode,
-    addResourceSourceCode,
     addServiceSourceCode,
     createServiceAndListener,
     exportOASFile,
@@ -64,7 +63,7 @@ import {
     getServiceModelFromCode,
     getTriggerModels,
     updateListenerSourceCode,
-    updateResourceSourceCode,
+    updateFunctionSourceCode,
     updateServiceSourceCode
 } from "@wso2/ballerina-core";
 import { HOST_EXTENSION } from "vscode-messenger-common";
@@ -133,16 +132,12 @@ export class ServiceDesignerRpcClient implements ServiceDesignerAPI {
         return this._messenger.sendRequest(getResourceReturnTypes, HOST_EXTENSION, params);
     }
 
-    addResourceSourceCode(params: FunctionSourceCodeRequest): Promise<UpdatedArtifactsResponse> {
-        return this._messenger.sendRequest(addResourceSourceCode, HOST_EXTENSION, params);
-    }
-
     addFunctionSourceCode(params: FunctionSourceCodeRequest): Promise<UpdatedArtifactsResponse> {
         return this._messenger.sendRequest(addFunctionSourceCode, HOST_EXTENSION, params);
     }
 
-    updateResourceSourceCode(params: FunctionSourceCodeRequest): Promise<UpdatedArtifactsResponse> {
-        return this._messenger.sendRequest(updateResourceSourceCode, HOST_EXTENSION, params);
+    updateFunctionSourceCode(params: FunctionSourceCodeRequest): Promise<UpdatedArtifactsResponse> {
+        return this._messenger.sendRequest(updateFunctionSourceCode, HOST_EXTENSION, params);
     }
 
     getServiceInitModel(params: ServiceModelRequest): Promise<ServiceModelInitResponse> {

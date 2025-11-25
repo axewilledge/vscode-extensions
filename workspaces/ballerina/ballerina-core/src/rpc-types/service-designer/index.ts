@@ -39,9 +39,8 @@ export interface ServiceDesignerAPI {
     updateServiceSourceCode: (params: ServiceSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
     getServiceModelFromCode: (params: ServiceModelFromCodeRequest) => Promise<ServiceModelFromCodeResponse>;
     getResourceReturnTypes: (params: ResourceReturnTypesRequest) => Promise<VisibleTypesResponse>;
-    addResourceSourceCode: (params: FunctionSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
     addFunctionSourceCode: (params: FunctionSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
-    updateResourceSourceCode: (params: FunctionSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
+    updateFunctionSourceCode: (params: FunctionSourceCodeRequest) => Promise<UpdatedArtifactsResponse>;
     getServiceInitModel: (params: ServiceModelRequest) => Promise<ServiceModelInitResponse>;
     createServiceAndListener: (params: ServiceInitSourceRequest) => Promise<UpdatedArtifactsResponse>;
     generateExamplePayloadJson: (params: PayloadContext) => Promise<object>;

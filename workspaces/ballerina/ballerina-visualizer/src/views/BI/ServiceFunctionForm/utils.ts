@@ -133,7 +133,7 @@ const handleFunctionSave = async (
         setIsSaving(true);
         const resolvedFilePath = await resolveFilePath(rpcClient, model.codedata.lineRange.fileName);
 
-        await rpcClient.getServiceDesignerRpcClient().updateResourceSourceCode({
+        await rpcClient.getServiceDesignerRpcClient().updateFunctionSourceCode({
             filePath: resolvedFilePath,
             codedata: {
                 lineRange: {

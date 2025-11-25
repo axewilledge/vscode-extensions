@@ -20,7 +20,6 @@
 import {
     addFunctionSourceCode,
     addListenerSourceCode,
-    addResourceSourceCode,
     addServiceSourceCode,
     createServiceAndListener,
     exportOASFile,
@@ -51,7 +50,7 @@ import {
     ServiceSourceCodeRequest,
     TriggerModelsRequest,
     updateListenerSourceCode,
-    updateResourceSourceCode,
+    updateFunctionSourceCode,
     updateServiceSourceCode
 } from "@wso2/ballerina-core";
 import { Messenger } from "vscode-messenger";
@@ -73,9 +72,8 @@ export function registerServiceDesignerRpcHandlers(messenger: Messenger) {
     messenger.onRequest(updateServiceSourceCode, (args: ServiceSourceCodeRequest) => rpcManger.updateServiceSourceCode(args));
     messenger.onRequest(getServiceModelFromCode, (args: ServiceModelFromCodeRequest) => rpcManger.getServiceModelFromCode(args));
     messenger.onRequest(getResourceReturnTypes, (args: ResourceReturnTypesRequest) => rpcManger.getResourceReturnTypes(args));
-    messenger.onRequest(addResourceSourceCode, (args: FunctionSourceCodeRequest) => rpcManger.addResourceSourceCode(args));
     messenger.onRequest(addFunctionSourceCode, (args: FunctionSourceCodeRequest) => rpcManger.addFunctionSourceCode(args));
-    messenger.onRequest(updateResourceSourceCode, (args: FunctionSourceCodeRequest) => rpcManger.updateResourceSourceCode(args));
+    messenger.onRequest(updateFunctionSourceCode, (args: FunctionSourceCodeRequest) => rpcManger.updateFunctionSourceCode(args));
     messenger.onRequest(getServiceInitModel, (args: ServiceModelRequest) => rpcManger.getServiceInitModel(args));
     messenger.onRequest(createServiceAndListener, (args: ServiceInitSourceRequest) => rpcManger.createServiceAndListener(args));
     messenger.onRequest(generateExamplePayloadJson, (args: PayloadContext) => rpcManger.generateExamplePayloadJson(args));

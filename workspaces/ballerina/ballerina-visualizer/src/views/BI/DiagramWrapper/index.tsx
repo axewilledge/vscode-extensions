@@ -289,7 +289,7 @@ export function DiagramWrapper(param: DiagramWrapperProps) {
         let res = undefined;
         res = await rpcClient
             .getServiceDesignerRpcClient()
-            .updateResourceSourceCode({ filePath, codedata: { lineRange }, function: value });
+            .updateFunctionSourceCode({ filePath, codedata: { lineRange }, function: value });
         /**
          * Update the artifact identifier to the current updated resource 
          * Resource identifier pattern --> METHOD#PATH --> 'get#foo' OR METHOD#WITH_PARAMS ---> 'post#bar/[string car]]'

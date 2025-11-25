@@ -286,7 +286,7 @@ export function GraphqlObjectViewer(props: GraphqlObjectViewerProps) {
                     artifactType: DIRECTORY_MAP.TYPE
                 });
             } else {
-                artifacts = await rpcClient.getServiceDesignerRpcClient().updateResourceSourceCode({
+                artifacts = await rpcClient.getServiceDesignerRpcClient().updateFunctionSourceCode({
                     filePath: currentFilePath,
                     codedata: {
                         lineRange: {

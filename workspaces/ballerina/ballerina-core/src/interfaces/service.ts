@@ -73,7 +73,7 @@ export interface FieldType extends ParameterModel {
 
 export interface FunctionModel {
     metadata?: MetaData;
-    kind: "REMOTE" | "RESOURCE" | "QUERY" | "MUTATION" | "SUBSCRIPTION" | "DEFAULT" | "INIT";
+    kind: "REMOTE" | "RESOURCE" | "QUERY" | "MUTATION" | "SUBSCRIPTION" | "DEFAULT" | "INIT" | "OBJECT_METHOD";
     enabled: boolean;
     optional: boolean;
     editable: boolean;

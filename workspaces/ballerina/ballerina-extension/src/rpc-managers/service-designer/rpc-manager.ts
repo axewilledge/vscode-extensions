@@ -280,7 +280,7 @@ export class ServiceDesignerRpcManager implements ServiceDesignerAPI {
         });
     }
 
-    async addResourceSourceCode(params: FunctionSourceCodeRequest): Promise<UpdatedArtifactsResponse> {
+    async updateFunctionSourceCode(params: FunctionSourceCodeRequest): Promise<UpdatedArtifactsResponse> {
         return new Promise(async (resolve) => {
             const context = StateMachine.context();
             try {
@@ -290,23 +290,7 @@ export class ServiceDesignerRpcManager implements ServiceDesignerAPI {
                     this.ensureFileExists(targetFile);
                     params.filePath = targetFile;
                 }
-                const res: ResourceSourceCodeResponse = await context.langClient.addResourceSourceCode(params);
-                const artifacts = await updateSourceCode({ textEdits: res.textEdits, artifactData: { artifactType: DIRECTORY_MAP.SERVICE }, description: 'Resource Creation' });
-                const result: UpdatedArtifactsResponse = {
-                    artifacts: artifacts
-                };
-                resolve(result);
-            } catch (error) {
-                console.log(error);
-            }
-        });
-    }
-
-    async updateResourceSourceCode(params: FunctionSourceCodeRequest): Promise<UpdatedArtifactsResponse> {
-        return new Promise(async (resolve) => {
-            const context = StateMachine.context();
-            try {
-                const res: ResourceSourceCodeResponse = await context.langClient.updateResourceSourceCode(params);
+                const res: ResourceSourceCodeResponse = await context.langClient.updateFunctionSourceCode(params);
                 const artifacts = await updateSourceCode({ textEdits: res.textEdits, artifactData: params.artifactType ? { artifactType: params.artifactType } : null, description: 'Resource Update' });
                 const result: UpdatedArtifactsResponse = {
                     artifacts: artifacts

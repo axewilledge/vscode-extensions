@@ -219,7 +219,7 @@ export function ServiceClassDesigner(props: ServiceClassDesignerProps) {
                     artifactType: DIRECTORY_MAP.TYPE
                 });
             } else {
-                lsResponse = await rpcClient.getServiceDesignerRpcClient().updateResourceSourceCode({
+                lsResponse = await rpcClient.getServiceDesignerRpcClient().updateFunctionSourceCode({
                     filePath: currentFilePath,
                     codedata: {
                         lineRange: {

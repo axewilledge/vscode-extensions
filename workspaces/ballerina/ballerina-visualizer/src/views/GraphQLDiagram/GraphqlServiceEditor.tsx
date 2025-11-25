@@ -557,7 +557,7 @@ export function GraphqlServiceEditor(props: GraphqlServiceEditorProps) {
         try {
             let artifacts;
             if (isEdit) {
-                artifacts = await rpcClient.getServiceDesignerRpcClient().updateResourceSourceCode({
+                artifacts = await rpcClient.getServiceDesignerRpcClient().updateFunctionSourceCode({
                     filePath,
                     codedata: {
                         lineRange: lineRange,
