@@ -48,7 +48,7 @@ import {
 } from '../utils';
 import { AssertionError } from "assert";
 import {
-    BALLERINA_HOME, ENABLE_ALL_CODELENS, ENABLE_TELEMETRY, ENABLE_SEMANTIC_HIGHLIGHTING, OVERRIDE_BALLERINA_HOME,
+    BALLERINA_HOME, ENABLE_ALL_CODELENS, ENABLE_TELEMETRY, ENABLE_SEMANTIC_HIGHLIGHTING,
     ENABLE_PERFORMANCE_FORECAST, ENABLE_DEBUG_LOG, ENABLE_BALLERINA_LS_DEBUG,
     ENABLE_EXPERIMENTAL_FEATURES, ENABLE_NOTEBOOK_DEBUG, ENABLE_RUN_FAST, ENABLE_INLAY_HINTS, FILE_DOWNLOAD_PATH,
     ENABLE_LIVE_RELOAD,
@@ -1502,10 +1502,9 @@ export class BallerinaExtension {
         if (isDev) { // Set the vscode configurable values only for dev mode
             debug(`[SETUP] Setting the Ballerina Home: ${this.ballerinaHome}`);
             workspace.getConfiguration().update(BALLERINA_HOME, this.ballerinaHome, ConfigurationTarget.Global);
-            workspace.getConfiguration().update(OVERRIDE_BALLERINA_HOME, true, ConfigurationTarget.Global);
         } else { // Turn off the dev mode when using prod installation
             debug(`[SETUP] Setting the Ballerina Home: ${this.ballerinaHome}`);
-            workspace.getConfiguration().update(OVERRIDE_BALLERINA_HOME, false, ConfigurationTarget.Global);
+            workspace.getConfiguration().update(BALLERINA_HOME, "", ConfigurationTarget.Global);
         }
     }
 
@@ -1648,7 +1647,6 @@ export class BallerinaExtension {
         // We need to restart VSCode if we change plugin configurations.
         workspace.onDidChangeConfiguration((params: ConfigurationChangeEvent) => {
             if (params.affectsConfiguration(BALLERINA_HOME)
-                || params.affectsConfiguration(OVERRIDE_BALLERINA_HOME)
                 || params.affectsConfiguration(ENABLE_ALL_CODELENS)
                 || params.affectsConfiguration(ENABLE_DEBUG_LOG)
                 || params.affectsConfiguration(ENABLE_BALLERINA_LS_DEBUG)
@@ -2282,7 +2280,7 @@ export class BallerinaExtension {
     }
 
     public overrideBallerinaHome(): boolean {
-        return <boolean>workspace.getConfiguration().get(OVERRIDE_BALLERINA_HOME);
+        return <string>workspace.getConfiguration().get(BALLERINA_HOME) !== "";
     }
 
     public getID(): string {

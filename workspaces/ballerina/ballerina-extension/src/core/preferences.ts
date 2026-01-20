@@ -17,7 +17,6 @@
  */
 
 export const BALLERINA_HOME = "ballerina.home";
-export const OVERRIDE_BALLERINA_HOME = "ballerina.pluginDevMode";
 export const ENABLE_TELEMETRY = "ballerina.enableTelemetry";
 export const ENABLE_ALL_CODELENS = "ballerina.codeLens.all.enabled";
 export const ENABLE_SEMANTIC_HIGHLIGHTING = "ballerina.enableSemanticHighlighting";

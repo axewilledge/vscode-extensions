@@ -76,11 +76,6 @@
             "type": "object",
             "title": "Ballerina Extension",
             "properties": {
-                "ballerina.pluginDevMode": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable plugin development mode."
-                },
                 "ballerina.home": {
                     "type": "string",
                     "default": "",
