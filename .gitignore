@@ -85,3 +85,5 @@ pnpm-lock.yaml
 
 # AI evaluation results
 **/results
+
+**/testProject/sample
