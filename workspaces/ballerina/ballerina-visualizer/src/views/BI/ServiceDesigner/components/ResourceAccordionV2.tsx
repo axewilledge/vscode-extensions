@@ -145,7 +145,7 @@ const ActionButton = styled(Button)`
 
 export interface ResourceAccordionPropsV2 {
     resource: ProjectStructureArtifactResponse;
-    onEditResource: (resource: FunctionModel) => void;
+    onEditResource?: (resource: FunctionModel) => void;
     onDeleteResource: (resource: FunctionModel) => void;
     onResourceImplement: (resource: FunctionModel) => void;
     readOnly?: boolean;
@@ -182,7 +182,7 @@ export function ResourceAccordionV2(params: ResourceAccordionPropsV2) {
     const handleEditResource = async (e: React.MouseEvent<HTMLElement | SVGSVGElement>) => {
         e.stopPropagation(); // Stop the event propagation
         const functionModel = await getFunctionModel();
-        onEditResource(functionModel.function);
+        onEditResource && onEditResource(functionModel.function);
     };
 
     const handleOpenConfirm = () => {
