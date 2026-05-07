@@ -26348,14 +26348,14 @@ snapshots:
   '@aws-crypto/crc32c@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.804.0
+      '@aws-sdk/types': 3.973.8
       tslib: 2.8.1
 
   '@aws-crypto/sha1-browser@5.2.0':
     dependencies:
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.804.0
+      '@aws-sdk/types': 3.973.8
       '@aws-sdk/util-locate-window': 3.965.5
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
@@ -26365,7 +26365,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.804.0
+      '@aws-sdk/types': 3.973.8
       '@aws-sdk/util-locate-window': 3.965.5
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
@@ -26373,7 +26373,7 @@ snapshots:
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.804.0
+      '@aws-sdk/types': 3.973.8
       tslib: 2.8.1
 
   '@aws-crypto/supports-web-crypto@5.2.0':
@@ -35171,7 +35171,7 @@ snapshots:
       react-dom: 18.2.0(react@18.2.0)
       stable: 0.1.8
       style-loader: 2.0.0(webpack@5.104.1)
-      terser-webpack-plugin: 5.3.14(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack@5.104.1)
+      terser-webpack-plugin: 5.3.10(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack@5.104.1)
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
       webpack: 5.104.1(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack-cli@6.0.1)
@@ -35226,7 +35226,7 @@ snapshots:
       react-dom: 18.2.0(react@18.2.0)
       stable: 0.1.8
       style-loader: 2.0.0(webpack@5.104.1)
-      terser-webpack-plugin: 5.3.14(webpack@5.104.1)
+      terser-webpack-plugin: 5.3.10(webpack@5.104.1)
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
       webpack: 5.104.1(webpack-cli@4.10.0)
@@ -37620,7 +37620,7 @@ snapshots:
       resolve-from: 5.0.0
       style-loader: 2.0.0(webpack@5.104.1)
       telejson: 6.0.8
-      terser-webpack-plugin: 5.3.14(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack@5.104.1)
+      terser-webpack-plugin: 5.3.10(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack@5.104.1)
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
       webpack: 5.104.1(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack-cli@6.0.1)
@@ -37670,7 +37670,7 @@ snapshots:
       resolve-from: 5.0.0
       style-loader: 2.0.0(webpack@5.104.1)
       telejson: 6.0.8
-      terser-webpack-plugin: 5.3.14(webpack@5.104.1)
+      terser-webpack-plugin: 5.3.10(webpack@5.104.1)
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
       webpack: 5.104.1(webpack-cli@4.10.0)
@@ -57664,6 +57664,17 @@ snapshots:
       webpack: 4.47.0
       webpack-sources: 1.4.3
 
+  terser-webpack-plugin@5.3.10(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack@5.104.1):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 3.3.0
+      serialize-javascript: 7.0.5
+      terser: 5.46.2
+      webpack: 5.104.1(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack-cli@6.0.1)
+    optionalDependencies:
+      '@swc/core': 1.15.24(@swc/helpers@0.5.21)
+
   terser-webpack-plugin@5.3.10(webpack@5.104.1):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -57692,7 +57703,7 @@ snapshots:
       schema-utils: 4.3.3
       serialize-javascript: 7.0.5
       terser: 5.46.2
-      webpack: 5.104.1(@swc/core@1.15.24(@swc/helpers@0.5.21))(webpack-cli@6.0.1)
+      webpack: 5.104.1(webpack-cli@5.1.4)
     optionalDependencies:
       '@swc/core': 1.15.24(@swc/helpers@0.5.21)
 
