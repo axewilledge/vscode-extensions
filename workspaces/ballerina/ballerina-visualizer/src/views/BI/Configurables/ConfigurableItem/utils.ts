@@ -128,7 +128,7 @@ export const validateTomlValue = (value: string, type: string): string => {
 
     if (trimmedType.endsWith('[]')) {
         if (!trimmedValue.startsWith('[') || !trimmedValue.endsWith(']')) {
-            return `Enter a array for ${type}.`;
+            return `Enter an array for ${type}.`;
         }
 
         const elementType = trimmedType.slice(0, -2);
