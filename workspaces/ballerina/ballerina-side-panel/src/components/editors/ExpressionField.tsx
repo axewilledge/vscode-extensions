@@ -32,7 +32,7 @@ import { LineRange } from '@wso2/ballerina-core/lib/interfaces/common';
 import { FormField, HelperpaneOnChangeOptions } from '../Form/types';
 import { ChipExpressionEditorComponent } from './MultiModeExpressionEditor/ChipExpressionEditor/components/ChipExpressionEditor';
 import RecordConfigPreviewEditor from './MultiModeExpressionEditor/RecordConfigPreviewEditor/RecordConfigPreviewEditor';
-import { ArrayEditorConfig, BooleanEditorConfig, NumberExpressionEditorConfig, RawTemplateEditorConfig, SQLExpressionEditorConfig, StringTemplateEditorConfig } from './MultiModeExpressionEditor/Configurations';
+import { ArrayEditorConfig, BooleanEditorConfig, MapEditorConfig, NumberExpressionEditorConfig, RawTemplateEditorConfig, SQLExpressionEditorConfig, StringTemplateEditorConfig } from './MultiModeExpressionEditor/Configurations';
 import NumberExpressionEditor from './MultiModeExpressionEditor/NumberExpressionEditor/NumberEditor';
 import { EnumEditor } from './MultiModeExpressionEditor/EnumEditor/EnumEditor';
 import { SQLExpressionEditor } from './MultiModeExpressionEditor/SqlExpressionEditor/SqlExpressionEditor';
@@ -86,6 +86,7 @@ export interface ExpressionFieldProps {
     onToggleHelperPane: () => void;
     onOpenExpandedMode?: () => void;
     isInExpandedMode?: boolean;
+    onLoadingStateChange?: (isLoading: boolean) => void;
     onNormalizeValue?: (value: string) => void;
 }
 
@@ -124,6 +125,8 @@ export const getEditorConfiguration = (inputMode: InputMode) => {
             return new ArrayEditorConfig();
         case InputMode.TEXT_ARRAY:
             return new ArrayEditorConfig();
+        case InputMode.MAP:
+            return new MapEditorConfig();
         default:
             return new ChipExpressionEditorDefaultConfiguration();
     }
@@ -157,6 +160,7 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
         rawExpression,
         onOpenExpandedMode,
         isInExpandedMode,
+        onLoadingStateChange,
         onNormalizeValue
     } = props;
 
@@ -251,6 +255,7 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
                 isInExpandedMode={isInExpandedMode}
                 configuration={getEditorConfiguration(inputMode)}
                 placeholder={field.placeholder}
+                onLoadingStateChange={onLoadingStateChange}
                 onNormalizeValue={onNormalizeValue}
             />
 
@@ -274,6 +279,7 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
                 isInExpandedMode={isInExpandedMode}
                 configuration={new RawTemplateEditorConfig()}
                 placeholder={field.placeholder}
+                onLoadingStateChange={onLoadingStateChange}
                 onNormalizeValue={onNormalizeValue}
             />
 
@@ -297,6 +303,7 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
                 isInExpandedMode={isInExpandedMode}
                 configuration={getPrimaryInputType(field.types)?.ballerinaType === "ai:Prompt" ? new RawTemplateEditorConfig() : new StringTemplateEditorConfig()}
                 placeholder={field.placeholder}
+                onLoadingStateChange={onLoadingStateChange}
                 onNormalizeValue={onNormalizeValue}
             />
 
@@ -319,6 +326,7 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
                 onRemove={onRemove}
                 isInExpandedMode={isInExpandedMode}
                 placeholder={field.placeholder}
+                onLoadingStateChange={onLoadingStateChange}
                 onNormalizeValue={onNormalizeValue}
             />
 
@@ -341,6 +349,7 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
                 onRemove={onRemove}
                 isInExpandedMode={isInExpandedMode}
                 placeholder={field.placeholder}
+                onLoadingStateChange={onLoadingStateChange}
                 onNormalizeValue={onNormalizeValue}
             />
         );
@@ -364,6 +373,7 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
             isInExpandedMode={isInExpandedMode}
             configuration={getEditorConfiguration(inputMode)}
             placeholder={field.placeholder}
+            onLoadingStateChange={onLoadingStateChange}
             onNormalizeValue={onNormalizeValue}
         />
     );
